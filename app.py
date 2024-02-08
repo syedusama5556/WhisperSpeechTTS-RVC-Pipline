@@ -35,11 +35,10 @@ footer = """
 
 ### Made By Syed Usama Ahmad
 
-```
-https://github.com/syedusama5556
-```
+[https://github.com/syedusama5556](https://github.com/syedusama5556)
 
 """
+
 
 
 #######################################################
@@ -252,7 +251,7 @@ load_rvc_settings()
 
 with gr.Blocks() as demo:
     gr.Markdown(title)
-    with gr.Row(equal_height=True):
+    with gr.Row():
         with gr.Column(scale=2):
             text_input = gr.Textbox(
                 label="Enter multilingual text💬📝",
@@ -267,7 +266,7 @@ with gr.Blocks() as demo:
                 label="Tempo (in characters per second)",
             )
 
-            with gr.Row(equal_height=True):
+            with gr.Row():
                 speaker_input = gr.Audio(
                     label="Upload or Record Speaker Audio (optional)🌬️💬",
                     sources=["upload", "microphone"],
@@ -278,7 +277,7 @@ with gr.Blocks() as demo:
                 )
 
             gr.Markdown("  \n  ")  # fixes the bottom overflow from Audio
-            generate_button = gr.Button("Generate Speech🌟", style="background-color: orange; color: white;")
+            generate_button = gr.Button("Generate Speech🌟")
 
         with gr.Column(scale=1):
             output_audio = gr.Audio(label="WhisperSpeech says…")
@@ -286,7 +285,7 @@ with gr.Blocks() as demo:
     with gr.Column():
         use_rvc = gr.Checkbox(label="Run the outputted audio through RVC", value=True)
         with gr.Column(visible=use_rvc) as rvc_column:
-            with gr.Row(equal_height=True):
+            with gr.Row():
                 refresh_voices = gr.Button(value="Refresh Voice List")
             RVC_SETTINGS["rvc_model"] = gr.Dropdown(
                 choices=get_rvc_models(),
@@ -349,8 +348,6 @@ with gr.Blocks() as demo:
             )
 
             rvc_inputs = list(RVC_SETTINGS.values())
-            # for k in RVC_SETTINGS:
-            # 	RVC_SETTINGS[k].change(fn=update_rvc_settings_proxy, inputs=rvc_inputs)
 
             for k, component in RVC_SETTINGS.items():
                 if isinstance(component, gr.Dropdown):

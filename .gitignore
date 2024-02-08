@@ -3,3 +3,4 @@ results
 output
 models/rvc_models
 *.wav
+*.ckpt
