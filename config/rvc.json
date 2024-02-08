@@ -1,0 +1,10 @@
+{
+	"rvc_model": "Jocker_Heath_Ledger.pth",
+	"f0_up_key": -6,
+	"file_index": "Jocker_Heath_Ledger.index",
+	"index_rate": 0.66,
+	"filter_radius": 3,
+	"resample_sr": 48000,
+	"rms_mix_rate": 0.5,
+	"protect": 0.33
+}

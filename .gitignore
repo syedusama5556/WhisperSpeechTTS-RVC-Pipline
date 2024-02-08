@@ -1,0 +1,5 @@
+runtime
+results
+output
+models/rvc_models
+*.wav

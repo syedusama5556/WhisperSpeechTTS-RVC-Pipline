@@ -1,0 +1,52 @@
+# Fundamentals
+numpy
+pyyaml
+tb-nightly
+future
+scp
+tqdm
+matplotlib
+scipy
+munch
+tqdm
+scp
+tensorboard
+orjson
+einops
+lambda-networks
+mup
+
+# For image generation stuff
+opencv-python
+kornia
+pytorch_ssim
+gsa-pytorch
+pytorch_fid
+
+# For audio generation stuff
+inflect
+librosa
+Unidecode
+tgt
+pyworld
+audio2numpy
+SoundFile
+
+# For text stuff
+transformers
+tokenizers
+jiwer  # calculating WER
+omegaconf
+
+# lucidrains stuff
+vector_quantize_pytorch
+linear_attention_transformer
+rotary-embedding-torch
+axial_positional_embedding
+g-mlp-pytorch
+x-clip
+x_transformers==1.0.4
+
+# bitsandbytes
+bitsandbytes==0.35.0 ; platform_system == "Windows"
+bitsandbytes ; platform_system != "Windows"
