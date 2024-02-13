@@ -16,6 +16,7 @@ from rvc_pipe.rvc_infer import rvc_convert
 # import soundfile as sf
 from voicefixer import VoiceFixer, Vocoder
 
+# from resemble_enhance.enhancer.inference import denoise, enhance as enhance_resemble
 
 from df.enhance import enhance, init_df, load_audio, save_audio
 
@@ -59,6 +60,7 @@ footer = """
 use_rvc = True
 use_audio_upscaler = False
 use_audio_deepfilternet = False
+use_resempble_enhance = False
 sample_rate = 24000  # Assuming sample rate is 24000
 
 RVC_SETTINGS = {
@@ -249,6 +251,33 @@ def upscale_audio_deepfilternet(input_file):
     return output_file_path
 
 
+
+# def upscale_audio_resempble_enhance(input_file_path, solver="Midpoint", nfe=64, tau=0.5, denoising=False):
+#     solver = solver.lower()
+#     nfe = int(nfe)
+#     lambd = 0.9 if denoising else 0.1
+
+#     dwav, sr = torchaudio.load(input_file_path)
+#     dwav = dwav.mean(dim=0)
+#     if torch.cuda.is_available():
+#         device = "cuda"
+#     else:
+#         device = "cpu"
+
+#     wav1, new_sr = denoise(dwav, sr, device)
+#     wav2, new_sr = enhance_resemble(dwav, sr, device, nfe=nfe, solver=solver, lambd=lambd, tau=tau,run_dir=Path('C:/Users/Syed Usama Ahmad/Documents/All_AI_Projects_List/WhisperSpeechTTS-RVC-Pipline/config')
+
+#     results_folder = "results"
+#     if not os.path.exists(results_folder):
+#         os.makedirs(results_folder)
+
+#     current_time = datetime.now().strftime("%d_%m_%Y__%H_%M_%S")
+#     output_file_path = f"{results_folder}/out_with_resembleenhance_{current_time}.wav"
+
+
+#     torchaudio.save(output_file_path, wav2, new_sr)
+#     return output_file_path
+
 #####################################################
 
 
@@ -285,7 +314,7 @@ def generate_audio(pipe, segments, speaker, speaker_url, cps=14):
 
 
 def whisper_speech_demo(
-    multilingual_text, speaker_audio=None, speaker_url="", cps=14, use_rvc=False, use_audio_upscaler=False,use_audio_deepfilternet=False
+    multilingual_text, speaker_audio=None, speaker_url="", cps=14, use_rvc=False, use_audio_upscaler=False,use_audio_deepfilternet=False,use_resempble_enhance=False
 ):        
     global sample_rate
     do_gc()
@@ -314,6 +343,11 @@ def whisper_speech_demo(
         audio, sample_rate_rvc = torchaudio.load(output_file_path)
         print("Upscale Done")
 
+    # if use_resempble_enhance:
+    #     output_file_path = upscale_audio_resempble_enhance(output_file_path)
+    #     audio, sample_rate_rvc = torchaudio.load(output_file_path)
+    #     print("Upscale use_resempble_enhance Done")
+
     if use_audio_deepfilternet:
         output_file_path = upscale_audio_deepfilternet(output_file_path)
         audio, sample_rate_rvc = torchaudio.load(output_file_path)
@@ -329,7 +363,7 @@ def whisper_speech_demo(
 
 
 
-    return ((sample_rate_rvc if  (use_rvc or use_audio_upscaler or use_audio_deepfilternet) else sample_rate), audio.T.numpy())
+    return ((sample_rate_rvc if  (use_rvc or use_audio_upscaler or use_audio_deepfilternet or use_resempble_enhance) else sample_rate), audio.T.numpy())
 
     # Did not work for me in Safari:
     # mp3 = io.BytesIO()
@@ -384,6 +418,7 @@ with gr.Blocks() as demo:
     with gr.Column():
         use_audio_upscaler = gr.Checkbox(label="Upscale the outputted audio with voice fixer (beta)", value=False)
         use_audio_deepfilternet = gr.Checkbox(label="Upscale the outputted audio with deepfilternet (beta)", value=False)
+        # use_resempble_enhance = gr.Checkbox(label="Upscale the outputted audio with resempble_enhance (beta)", value=False)
         use_rvc = gr.Checkbox(label="Run the outputted audio through RVC", value=True)
         with gr.Column(visible=use_rvc) as rvc_column:
             with gr.Row():

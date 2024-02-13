@@ -1,5 +1,6 @@
 {
     "python.analysis.extraPaths": [
-        "./runtime/Lib/site-packages"
+        "./runtime/Lib/site-packages",
+        "./tes_resemble-enhance"
     ]
 }
