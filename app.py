@@ -16,6 +16,11 @@ from rvc_pipe.rvc_infer import rvc_convert
 # import soundfile as sf
 from voicefixer import VoiceFixer, Vocoder
 
+
+from df.enhance import enhance, init_df, load_audio, save_audio
+
+
+
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
 torch.set_float32_matmul_precision("high")
 
@@ -53,6 +58,7 @@ footer = """
 
 use_rvc = True
 use_audio_upscaler = False
+use_audio_deepfilternet = False
 sample_rate = 24000  # Assuming sample rate is 24000
 
 RVC_SETTINGS = {
@@ -217,9 +223,31 @@ def upscale_audio(input_file):
  
     # sf.write(output_file_path, data=out_wav, samplerate=48000)
 
-    print("Upscaler Done")
 
     return output_file_path
+
+
+
+def upscale_audio_deepfilternet(input_file):
+
+   # Check if the "results" folder exists, if not, create it
+    results_folder = "results"
+    if not os.path.exists(results_folder):
+        os.makedirs(results_folder)
+
+    current_time = datetime.now().strftime("%d_%m_%Y__%H_%M_%S")
+    output_file_path = f"{results_folder}/out_with_deepfilternet_{current_time}.wav"
+
+    model, df_state, _ = init_df()
+
+    audio, _ = load_audio(input_file, sr=df_state.sr())
+    # Denoise the audio
+    enhanced = enhance(model, df_state, audio)
+    # Save for listening
+    save_audio(output_file_path, enhanced, df_state.sr())
+
+    return output_file_path
+
 
 #####################################################
 
@@ -257,7 +285,7 @@ def generate_audio(pipe, segments, speaker, speaker_url, cps=14):
 
 
 def whisper_speech_demo(
-    multilingual_text, speaker_audio=None, speaker_url="", cps=14, use_rvc=False, use_audio_upscaler=False
+    multilingual_text, speaker_audio=None, speaker_url="", cps=14, use_rvc=False, use_audio_upscaler=False,use_audio_deepfilternet=False
 ):        
     global sample_rate
     do_gc()
@@ -276,9 +304,20 @@ def whisper_speech_demo(
     current_time = datetime.now().strftime("%d_%m_%Y__%H_%M_%S")
     
     # Construct the output file path with the unique string
-    output_file_path = f"{results_folder}/out_with_rvc_{str(RVC_SETTINGS.get('rvc_model', ''))}_{current_time}.mp3"
+    output_file_path = f"{results_folder}/out_with_rvc_{str(RVC_SETTINGS.get('rvc_model', ''))}_{current_time}.wav"
 
     torchaudio.save(output_file_path, audio, sample_rate)
+
+
+    if use_audio_upscaler:
+        output_file_path = upscale_audio(output_file_path)
+        audio, sample_rate_rvc = torchaudio.load(output_file_path)
+        print("Upscale Done")
+
+    if use_audio_deepfilternet:
+        output_file_path = upscale_audio_deepfilternet(output_file_path)
+        audio, sample_rate_rvc = torchaudio.load(output_file_path)
+        print("Upscale Done")
 
     if use_rvc:
         print("Running RVC")
@@ -288,12 +327,9 @@ def whisper_speech_demo(
         audio, sample_rate_rvc = torchaudio.load(output_file_path)
         print("RVC Done")
 
-    if use_audio_upscaler:
-        output_file_path = upscale_audio(output_file_path)
-        audio, sample_rate_rvc = torchaudio.load(output_file_path)
-        print("upscale2 Done")
 
-    return ((sample_rate_rvc if  (use_rvc or use_audio_upscaler) else sample_rate), audio.T.numpy())
+
+    return ((sample_rate_rvc if  (use_rvc or use_audio_upscaler or use_audio_deepfilternet) else sample_rate), audio.T.numpy())
 
     # Did not work for me in Safari:
     # mp3 = io.BytesIO()
@@ -347,6 +383,7 @@ with gr.Blocks() as demo:
 
     with gr.Column():
         use_audio_upscaler = gr.Checkbox(label="Upscale the outputted audio with voice fixer (beta)", value=False)
+        use_audio_deepfilternet = gr.Checkbox(label="Upscale the outputted audio with deepfilternet (beta)", value=False)
         use_rvc = gr.Checkbox(label="Run the outputted audio through RVC", value=True)
         with gr.Column(visible=use_rvc) as rvc_column:
             with gr.Row():
@@ -423,7 +460,7 @@ with gr.Blocks() as demo:
 
     generate_button.click(
         whisper_speech_demo,
-        inputs=[text_input, speaker_input, url_input, cps,use_rvc,use_audio_upscaler],
+        inputs=[text_input, speaker_input, url_input, cps,use_rvc,use_audio_upscaler,use_audio_deepfilternet],
         outputs=output_audio,
     )
     refresh_voices.click(
