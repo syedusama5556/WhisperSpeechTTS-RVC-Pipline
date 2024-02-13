@@ -1,7 +1,7 @@
 {
-	"rvc_model": "Narrator.pth",
+	"rvc_model": "GlenCampbell.pth",
 	"f0_up_key": 0,
-	"file_index": "Narrator.index",
+	"file_index": "GlenCampbell.index",
 	"index_rate": 0.66,
 	"filter_radius": 3,
 	"resample_sr": 24000,

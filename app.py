@@ -346,7 +346,7 @@ with gr.Blocks() as demo:
             output_audio = gr.Audio(label="WhisperSpeech says…")
 
     with gr.Column():
-        use_audio_upscaler = gr.Checkbox(label="Upscale the outputted audio with voice fixer (beta)", value=True)
+        use_audio_upscaler = gr.Checkbox(label="Upscale the outputted audio with voice fixer (beta)", value=False)
         use_rvc = gr.Checkbox(label="Run the outputted audio through RVC", value=True)
         with gr.Column(visible=use_rvc) as rvc_column:
             with gr.Row():
