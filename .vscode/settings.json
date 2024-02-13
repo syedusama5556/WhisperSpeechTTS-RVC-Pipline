@@ -1,0 +1,5 @@
+{
+    "python.analysis.extraPaths": [
+        "./runtime/Lib/site-packages"
+    ]
+}

@@ -1,6 +1,7 @@
 from datetime import datetime
 import gc
 import json
+import random
 import gradio as gr
 import io
 import os
@@ -10,7 +11,13 @@ import torchaudio
 from pathlib import Path
 from whisperspeech.pipeline import Pipeline
 from rvc_pipe.rvc_infer import rvc_convert
+# from audiosr import build_model, super_resolution
+# import numpy as np
+# import soundfile as sf
+from voicefixer import VoiceFixer, Vocoder
 
+os.environ["TOKENIZERS_PARALLELISM"] = "true"
+torch.set_float32_matmul_precision("high")
 
 DEVEL = os.environ.get("DEVEL", False)
 
@@ -45,6 +52,7 @@ footer = """
 # all rvc stuff
 
 use_rvc = True
+use_audio_upscaler = True
 sample_rate = 24000  # Assuming sample rate is 24000
 
 RVC_SETTINGS = {
@@ -164,6 +172,54 @@ def run_rvc_infrence(output_voice):
 
 
 #######################################################
+#AUDIO-SR
+
+def upscale_audio(input_file):
+
+   # Check if the "results" folder exists, if not, create it
+    results_folder = "results"
+    if not os.path.exists(results_folder):
+        os.makedirs(results_folder)
+
+    current_time = datetime.now().strftime("%d_%m_%Y__%H_%M_%S")
+    output_file_path = f"{results_folder}/out_with_voicefixer_{current_time}.wav"
+
+
+    # TEST VOICEFIXER
+    ## Initialize a voicefixer
+    print("Initializing VoiceFixer...")
+    voicefixer = VoiceFixer()
+    # Mode 0: Original Model (suggested by default)
+    # Mode 1: Add preprocessing module (remove higher frequency)
+    # Mode 2: Train mode (might work sometimes on seriously degraded real speech)
+    # for mode in [0,1,2]:
+    #     print("Testing mode",mode)
+    #     voicefixer.restore(input=os.path.join(os.getcwd(), input_file),  # Path to low quality .wav/.flac file
+    #                     output=os.path.join(os.getcwd(), output_file_path),  # Path to save the file
+    #                     cuda=False,  # Enable GPU acceleration
+    #                     mode=mode)
+
+    voicefixer.restore(input= input_file,  # Path to low quality .wav/.flac file
+                output= output_file_path,  # Path to save the file
+                cuda=False,  # Enable GPU acceleration
+                mode=all)
+    ## Initialize a vocoder
+    print("Initializing 44.1kHz speech vocoder...")
+    vocoder = Vocoder(sample_rate=44100)
+
+    ### read wave (fpath) -> mel spectrogram -> vocoder -> wave -> save wave (out_path)
+    print("Test vocoder using groundtruth mel spectrogram...")
+    vocoder.oracle(fpath=output_file_path,
+                out_path=output_file_path,
+                cuda=False) # GPU acceleration
+ 
+    # sf.write(output_file_path, data=out_wav, samplerate=48000)
+
+    print("Upscaler Done")
+
+    return output_file_path
+
+#####################################################
 
 
 def parse_multilingual_text(input_text):
@@ -199,7 +255,7 @@ def generate_audio(pipe, segments, speaker, speaker_url, cps=14):
 
 
 def whisper_speech_demo(
-    multilingual_text, speaker_audio=None, speaker_url="", cps=14, use_rvc=False
+    multilingual_text, speaker_audio=None, speaker_url="", cps=14, use_rvc=False, use_audio_upscaler=False
 ):        
     global sample_rate
     do_gc()
@@ -230,7 +286,12 @@ def whisper_speech_demo(
         audio, sample_rate_rvc = torchaudio.load(output_file_path)
         print("RVC Done")
 
-    return ((sample_rate_rvc if use_rvc else sample_rate), audio.T.numpy())
+    if use_audio_upscaler:
+        output_file_path = upscale_audio(output_file_path)
+        audio, sample_rate_rvc = torchaudio.load(output_file_path)
+        print("upscale2 Done")
+
+    return ((sample_rate_rvc if  (use_rvc or use_audio_upscaler) else sample_rate), audio.T.numpy())
 
     # Did not work for me in Safari:
     # mp3 = io.BytesIO()
@@ -283,6 +344,7 @@ with gr.Blocks() as demo:
             output_audio = gr.Audio(label="WhisperSpeech says…")
 
     with gr.Column():
+        use_audio_upscaler = gr.Checkbox(label="Upscale the outputted audio with voice fixer (beta)", value=True)
         use_rvc = gr.Checkbox(label="Run the outputted audio through RVC", value=True)
         with gr.Column(visible=use_rvc) as rvc_column:
             with gr.Row():
@@ -359,7 +421,7 @@ with gr.Blocks() as demo:
 
     generate_button.click(
         whisper_speech_demo,
-        inputs=[text_input, speaker_input, url_input, cps,use_rvc],
+        inputs=[text_input, speaker_input, url_input, cps,use_rvc,use_audio_upscaler],
         outputs=output_audio,
     )
     refresh_voices.click(
