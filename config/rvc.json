@@ -1,10 +1,10 @@
 {
-	"rvc_model": "ArthurMorgan.pth",
-	"f0_up_key": -6,
-	"file_index": "ArthurMorgan.index",
-	"index_rate": 1,
+	"rvc_model": "Narrator.pth",
+	"f0_up_key": 0,
+	"file_index": "Narrator.index",
+	"index_rate": 0.66,
 	"filter_radius": 3,
-	"resample_sr": 48000,
+	"resample_sr": 24000,
 	"rms_mix_rate": 0.5,
 	"protect": 0.33
 }

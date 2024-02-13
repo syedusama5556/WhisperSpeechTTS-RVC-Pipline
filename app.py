@@ -52,7 +52,7 @@ footer = """
 # all rvc stuff
 
 use_rvc = True
-use_audio_upscaler = True
+use_audio_upscaler = False
 sample_rate = 24000  # Assuming sample rate is 24000
 
 RVC_SETTINGS = {
@@ -61,7 +61,7 @@ RVC_SETTINGS = {
     "file_index": "",
     "index_rate": 0.66,
     "filter_radius": 3,
-    "resample_sr": 48000,
+    "resample_sr": 24000,
     "rms_mix_rate": 0.25,
     "protect": 0.33,
 }
@@ -150,6 +150,8 @@ def run_rvc_infrence(output_voice):
     rvc_model_path = os.path.join("models", "rvc_models", rvc_settings["rvc_model"])
     rvc_index_path = os.path.join("models", "rvc_models", rvc_settings["file_index"])
     print(rvc_model_path)
+    print(RVC_SETTINGS)
+
     rvc_out_path = rvc_convert(
         model_path=rvc_model_path,
         input_path=output_voice,
